@@ -229,7 +229,7 @@ async fn event_handler(
             {
                 let mut ref_exists = false;
                 let content = new_message.content.clone();
-                let prompt = format!("Answer this question in no more than 1500 characters, and go straight to the point. If the question only contains '.ask' or doesnt have any real question respond with a random food/animal emoji. Use MARKDOWN for formatting. \n The question: <<{content}>> ");
+                let prompt = format!("Answer this question in detail (But without exceeding 2000 characters). If the question only contains '.ask' or doesnt have any real question respond with a random food/animal emoji. Use MARKDOWN for formatting. \n The question: <<{content}>> ");
                 let response = call_gemini(prompt.as_str());
                 let r = response.unwrap();
                 let parsed = extract_response(&r.as_str());

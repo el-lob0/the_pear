@@ -6,7 +6,7 @@ use regex::Regex;
 
 pub fn extract_response(json_str: &str) -> String {
     // Regex to match: "text": "SOME TEXT"
-    let re = Regex::new(r#""text"\s*:\s*"([^"]+)""#).unwrap();
+    let re = Regex::new(r#""text"\s*:\s*"((?:\\.|[^"\\])*)""#).unwrap();
 
 
     if let Some(caps) = re.captures(json_str) {
