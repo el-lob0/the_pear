@@ -8,6 +8,8 @@ use std::io::{Read, Write};
 use std::path::Path;
 use ::serenity::all::Attachment;
 mod parse;
+use axum::{routing::get, Router};
+
 
 // use serde_json::json;
 // use reqwest::Client;
@@ -138,6 +140,19 @@ async fn ping(
 #[tokio::main]
 async fn main() {
 
+
+
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:8000").await.unwrap();
+    println!("Web server listening on port 8000");
+
+    let app = Router::new().route("/", get(|| async { "OK" }));
+
+    tokio::spawn(async move {
+        axum::serve(listener, app).await.unwrap();
+    });
+
+
+
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
             commands: vec![ping()],
@@ -150,7 +165,7 @@ async fn main() {
             },
             on_error: |error| {
                 Box::pin(async move {
-                    println!("what the hell");
+                    println!("ERROR -> passed prefix and event handler.");
                     match error {
                         poise::FrameworkError::ArgumentParse { error, .. } => {
                             if let Some(error) = error.downcast_ref::<serenity::RoleParseError>() {
@@ -200,71 +215,75 @@ async fn event_handler(
             println!("Logged in as {}", data_about_bot.user.name);
         }
         serenity::FullEvent::Message { new_message } => {
-            if new_message.content.to_lowercase().contains(".pear")
-            {
-                let mut ref_exists = false;
-                let replied_to = new_message.referenced_message.clone();
-                match replied_to {
-                    None => ref_exists = false,
-                    Some(msg) => {
-                        let content = msg.content;
-                        let prompt = format!("I will give you a message and i want you to reformulte it in an aristocratic type of tone. Like old sophisticated english, but not to the point where there is complicated words like shakespeare (like none of those harth type words that end with th). Make sure to translate the right meaning for slang words too. Ignore any links in the message. And if the message is in french, do the same but in french, emulating moliere lamnguage for example. AND REPLY ONLY WITH THE RESPONSE MESSAGE.\n The message: <<{content}>> ");
-                        let response = call_gemini(prompt.as_str());
-                        let r = response.unwrap();
-                        let parsed = extract_response(&r.as_str());
-                        let author = match &new_message.author.global_name {
-                            None => "Unknown".to_string(),
-                            Some(auth) => auth.to_string(),
-                        };
-                        new_message
-                            .reply(
-                                ctx,
-                                format!("{parsed} \n -- {:?}", author),
-                            )
-                            .await?;                       
+            if new_message.author.id == 1203281930788012084 {
+                new_message.reply(ctx, "Ferme la toi");
+            } else {
+                if new_message.content.to_lowercase().contains(".pear")
+                {
+                    let mut ref_exists = false;
+                    let replied_to = new_message.referenced_message.clone();
+                    match replied_to {
+                        None => ref_exists = false,
+                        Some(msg) => {
+                            let content = msg.content;
+                            let prompt = format!("I will give you a message and i want you to reformulte it in an aristocratic type of tone. Like old sophisticated english, but not to the point where there is complicated words like shakespeare (like none of those harth type words that end with th). Make sure to translate the right meaning for slang words too. Ignore any links in the message. And if the message is in french, do the same but in french, emulating moliere lamnguage for example. AND REPLY ONLY WITH THE RESPONSE MESSAGE.\n The message: <<{content}>> ");
+                            let response = call_gemini(prompt.as_str());
+                            let r = response.unwrap();
+                            let parsed = extract_response(&r.as_str());
+                            let author = match &new_message.author.global_name {
+                                None => "Unknown".to_string(),
+                                Some(auth) => auth.to_string(),
+                            };
+                            new_message
+                                .reply(
+                                    ctx,
+                                    format!("{parsed} \n -- {:?}", author),
+                                )
+                                .await?;                       
+                                }
+                        }
+                }
+                if new_message.content.to_lowercase().contains(".ask")
+                {
+                    let mut ref_exists = false;
+                    let content = new_message.content.clone();
+                    let prompt = format!("Answer this question in detail (But without exceeding 2000 characters). If the question only contains '.ask' or doesnt have any real question respond with a random food/animal emoji. Use MARKDOWN for formatting. \n The question: <<{content}>> ");
+                    let response = call_gemini(prompt.as_str());
+                    let r = response.unwrap();
+                    let parsed = extract_response(&r.as_str());
+                    new_message
+                        .reply(
+                            ctx,
+                            format!("{parsed} \n -Gemini AI"),
+                        )
+                        .await?;                       
+                }
+
+                if new_message.content.to_lowercase().contains("!gif")
+                {
+                    let message = new_message.referenced_message.clone().unwrap();
+
+
+
+                    let files = message.attachments.clone();
+
+                    println!("{:?}", files);
+                    if files.is_empty() {
+                            new_message.reply(ctx, format!("No attachments found!")).await?;
+                        } else {
+                            for img in &message.attachments {
+
+                                let link = &img.url;
+
+                                let result = file_dl::download_image(link);
+                                // Path to your local file
+                                // let path = "../image_store/image.gif";
+                                // let file = tokio::fs::File::open(path);
+                                // let clean = file.await.unwrap();
+                                // let attachment = serenity::CreateAttachment::file(&clean, "image.gif");
+                                
                             }
                     }
-            }
-            if new_message.content.to_lowercase().contains(".ask")
-            {
-                let mut ref_exists = false;
-                let content = new_message.content.clone();
-                let prompt = format!("Answer this question in detail (But without exceeding 2000 characters). If the question only contains '.ask' or doesnt have any real question respond with a random food/animal emoji. Use MARKDOWN for formatting. \n The question: <<{content}>> ");
-                let response = call_gemini(prompt.as_str());
-                let r = response.unwrap();
-                let parsed = extract_response(&r.as_str());
-                new_message
-                    .reply(
-                        ctx,
-                        format!("{parsed} \n -Gemini AI"),
-                    )
-                    .await?;                       
-            }
-
-            if new_message.content.to_lowercase().contains("!gif")
-            {
-                let message = new_message.referenced_message.clone().unwrap();
-
-
-
-                let files = message.attachments.clone();
-
-                println!("{:?}", files);
-                if files.is_empty() {
-                        new_message.reply(ctx, format!("No attachments found!")).await?;
-                    } else {
-                        for img in &message.attachments {
-
-                            let link = &img.url;
-
-                            let result = file_dl::download_image(link);
-                            // Path to your local file
-                            // let path = "../image_store/image.gif";
-                            // let file = tokio::fs::File::open(path);
-                            // let clean = file.await.unwrap();
-                            // let attachment = serenity::CreateAttachment::file(&clean, "image.gif");
-                            
-                        }
                 }
             }
         }
