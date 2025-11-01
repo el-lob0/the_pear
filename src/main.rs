@@ -216,7 +216,7 @@ async fn event_handler(
         }
         serenity::FullEvent::Message { new_message } => {
             if new_message.author.id == 1203281930788012084 {
-                new_message.reply(ctx, "Ferme la toi");
+                new_message.reply(ctx, "Ferme la toi").await;
             } else {
                 if new_message.content.to_lowercase().contains(".pear")
                 {
