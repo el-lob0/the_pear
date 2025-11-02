@@ -1,6 +1,6 @@
 <div align="center">
     <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTjoPzxoEHqHK9mSaOJTlePl-TcznOzo3H9U75Cz4utY6qCZyd-AtfSVxzUcs0-MEaGnDMd-ta8h6Ne6u0dyfT5RmJDTX2uZo5N_-Nhog&s=10" width=170, height=200 />
-    <img src="https://readme-typing-svg.demolab.com/?font=NotoSans%20CF%20Italic&weight=700&size=70&duration=1500&pause=100000&color=6791C9&background=000A0E&center=true&vCenter=true&width=400&height=200&repeat=true&lines=ThePear">
+    <img src="https://readme-typing-svg.demolab.com/?font=NotoSans&weight=700&size=70&duration=1500&pause=100000&color=6791C9&background=000A0E&center=true&vCenter=true&width=400&height=170&repeat=true&lines=ThePear">
 </div>
 
 ##
