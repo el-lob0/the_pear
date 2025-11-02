@@ -1,6 +1,5 @@
 /target
 .env
 usr_requests.txt
-bot_storage/encrypted.txt
-bot_storage/permission_to_decrypt.txt
+bot_storage/
 
