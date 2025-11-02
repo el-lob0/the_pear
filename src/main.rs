@@ -8,12 +8,23 @@ use std::io::{Read, Write};
 use std::path::Path;
 use ::serenity::all::Attachment;
 mod parse;
+use regex;
 use axum::{routing::get, Router};
+use simple_db;
+use chrono::Local;
 
 
 // use serde_json::json;
 // use reqwest::Client;
 // use std::env;
+
+
+
+
+
+
+
+
 
 
 struct Data {} // User data, which is stored and accessible in all command invocations
@@ -105,7 +116,7 @@ async fn gif(
 
                 // let attachment = serenity::CreateAttachment::path("./image_store/image.gif");
 
-                let bytes = fs::read("./image_store/image.gif");
+                let bytes = fs::read("./bot_storage/image.gif");
                 // let attachment = serenity::CreateAttachment::bytes(bytes.unwrap(), "lebron_james.gif");
                 println!("{:?}", bytes);
                 // let reply = poise::CreateReply::default()
@@ -125,7 +136,7 @@ async fn gif(
 #[poise::command(prefix_command)]
 async fn ping(
     ctx: Context<'_>,
-    msg: Option<serenity::Message>,
+    _msg: Option<serenity::Message>,
 ) -> Result<(), Error> {
 
     let response = format!("PONG!");
@@ -142,14 +153,14 @@ async fn main() {
 
 
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:8000").await.unwrap();
-    println!("Web server listening on port 8000");
-
-    let app = Router::new().route("/", get(|| async { "OK" }));
-
-    tokio::spawn(async move {
-        axum::serve(listener, app).await.unwrap();
-    });
+    // let listener = tokio::net::TcpListener::bind("0.0.0.0:8000").await.unwrap();
+    // println!("Web server listening on port 8000");
+    //
+    // let app = Router::new().route("/", get(|| async { "OK" }));
+    //
+    // tokio::spawn(async move {
+    //     axum::serve(listener, app).await.unwrap();
+    // });
 
 
 
@@ -225,12 +236,12 @@ async fn event_handler(
                     match replied_to {
                         None => ref_exists = false,
                         Some(msg) => {
-                            let content = msg.content;
+                            let content = &msg.content;
                             let prompt = format!("I will give you a message and i want you to reformulte it in an aristocratic type of tone. Like old sophisticated english, but not to the point where there is complicated words like shakespeare (like none of those harth type words that end with th). Make sure to translate the right meaning for slang words too. Ignore any links in the message. And if the message is in french, do the same but in french, emulating moliere lamnguage for example. AND REPLY ONLY WITH THE RESPONSE MESSAGE.\n The message: <<{content}>> ");
                             let response = call_gemini(prompt.as_str());
                             let r = response.unwrap();
                             let parsed = extract_response(&r.as_str());
-                            let author = match &new_message.author.global_name {
+                            let author = match &msg.author.global_name {
                                 None => "Unknown".to_string(),
                                 Some(auth) => auth.to_string(),
                             };
@@ -245,18 +256,32 @@ async fn event_handler(
                 }
                 if new_message.content.to_lowercase().contains(".ask")
                 {
-                    let mut ref_exists = false;
-                    let content = new_message.content.clone();
-                    let prompt = format!("Answer this question in detail (But without exceeding 2000 characters). If the question only contains '.ask' or doesnt have any real question respond with a random food/animal emoji. Use MARKDOWN for formatting. \n The question: <<{content}>> ");
-                    let response = call_gemini(prompt.as_str());
-                    let r = response.unwrap();
-                    let parsed = extract_response(&r.as_str());
-                    new_message
-                        .reply(
-                            ctx,
-                            format!("{parsed} \n -Gemini AI"),
-                        )
-                        .await?;                       
+                    let usr_limit = check_usr_limit(new_message.author.id.into());
+                    if usr_limit > 0 {
+                        let mut ref_exists = false;
+                        let content = new_message.content.clone();
+
+                        let prompt = format!("Answer this question in detail (But without exceeding 2000 characters). If the question only contains '.ask' or doesnt have any real question respond with a random food/animal emoji. Use MARKDOWN for formatting. \n The question: <<{content}>> ");
+
+                        let response = call_gemini(prompt.as_str());
+                        let r = response.unwrap();
+                        let parsed = extract_response(&r.as_str());
+
+                        new_message
+                            .reply(
+                                ctx,
+                                format!("{parsed} \n \n -gemini ai \n \n (***{usr_limit} requests** are left for this user.*)"),
+                            )
+                            .await?;
+
+                    } else {
+                        new_message
+                            .reply(
+                                ctx,
+                                format!("You've hit your daily limit of requests already gng :pensive:"),
+                            )
+                            .await?;
+                    }
                 }
 
                 if new_message.content.to_lowercase().contains("!gif")
@@ -295,7 +320,73 @@ async fn event_handler(
 
 
 
+fn check_usr_limit(usr_id: u64) ->  usize {
+    let mut usr_requests = simple_db::SimpleDB::find_database("usr_requests.txt");
+    let mut db = usr_requests.unwrap();
+    let max_requests = 5;
+
+    let now = Local::now();
+    let formatted = now.format("%d/%m/%Y").to_string();
+
+    let key = format!("{}-{}", usr_id, formatted);
+
+    println!("{key}");
+    remove_expired_keys(formatted);
+
+    match db.get_value_from_db(&key.to_string()) {
+// add new value
+        None => {
+            let value = 1;
+            println!("NONE arm matches");
+            let fail = db.insert_into_db(key.to_string(), value.to_string());
+            return max_requests-value
+        },  
+        Some(c) => {
+            let count = c.parse::<usize>().unwrap();
+
+            if count < max_requests {
+                let value = count+1;
+                let fail = db.insert_into_db(key.to_string(), value.to_string());
+                return max_requests-value
+            } else {
+                return 0
+            }
+        },  
+    }
+    // return number of requests left
+}
 
 
+fn remove_expired_keys(id: String) {
+    let mut usr_requests = simple_db::SimpleDB::find_database("usr_requests.txt");
+    let mut db = usr_requests.unwrap();
+
+    let re = regex::Regex::new(r"-(.*)").unwrap();
+
+    // Get current user's date (the day part)
+    let db_day = re
+        .captures(&id)
+        .and_then(|caps| caps.get(1))
+        .map(|m| m.as_str().to_string());
+
+    // Collect keys to delete (to avoid mutating while iterating)
+    let mut to_delete = Vec::new();
+
+    for key in db.data.keys() {
+        let day = re
+            .captures(key)
+            .and_then(|caps| caps.get(1))
+            .map(|m| m.as_str().to_string());
+
+        if day != db_day {
+            to_delete.push(key.clone());
+        }
+    }
+
+    // Now safely delete
+    for key in to_delete {
+        db.delete_from_db(&key);
+    }
+}
 
 

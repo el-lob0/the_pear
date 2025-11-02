@@ -1,7 +1,7 @@
 use std::process::Command;
 
 pub fn download_image(url: &str) -> Result<(), Box<dyn std::error::Error>> {
-    let output_path = "./image_store/image.gif";
+    let output_path = "./bot_storage/image.gif";
 
     // Run curl
     let status = Command::new("curl")
