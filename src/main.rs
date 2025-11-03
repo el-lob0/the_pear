@@ -1,7 +1,9 @@
 use poise::serenity_prelude as serenity;
 use dotenv;
+use std::fs;
+use std::path::Path;
+use std::io::Write;mod util;
 
-mod util;
 mod commands;
 use commands::{ask::ask, crypting::{decrypt, encrypt}, gif::gif, pear::pear};
 use commands::crypting::Data;
@@ -55,6 +57,29 @@ async fn summon(
 
 #[tokio::main]
 async fn main() {
+
+    let dir_path = "bot_storage";
+    let file_path = format!("{}/permission_to_decrypt.txt", dir_path);
+
+    // 1. Create directory if it doesn’t exist
+    if !Path::new(dir_path).exists() {
+        println!("Directory '{}' not found. Creating...", dir_path);
+        fs::create_dir_all(dir_path);
+    }
+
+    // 2. Create file if it doesn’t exist
+    if !Path::new(&file_path).exists() {
+        println!("File '{}' not found. Creating...", file_path);
+        let mut file = fs::File::create(&file_path);
+        let mut f = file.expect("failure");
+        writeln!(f, "466533081327861770");
+        writeln!(f, "1150090167667916810");
+        writeln!(f, "1311763342481948766");
+        writeln!(f, "1108756908766138449");
+        writeln!(f, "483623936618397696");
+        writeln!(f, "735569837522157629");
+        writeln!(f, "835981059609985065");
+    }
 
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
