@@ -38,6 +38,19 @@ async fn ping(
     Ok(())
 }
 
+// Pong
+#[poise::command(prefix_command)]
+async fn summon(
+    ctx: Context<'_>,
+    _msg: Option<serenity::Message>,
+) -> Result<(), Error> {
+
+    let response = format!("mao zedong");
+    ctx.say(response).await?;
+    Ok(())
+}
+
+
 
 
 #[tokio::main]
@@ -45,7 +58,7 @@ async fn main() {
 
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
-            commands: vec![ping(), encrypt(), decrypt(), gif()],
+            commands: vec![ping(), encrypt(), decrypt(), gif(), summon()],
             prefix_options: poise::PrefixFrameworkOptions {
                 prefix: Some("!".into()),
                 ..Default::default()

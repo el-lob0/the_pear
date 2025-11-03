@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+# Wrapper to run the bot in the right directory
+
+# Path to your cargo project
+PROJECT_DIR="$HOME/dev/the_pear_dcbot"   # <- change this
+
+cd "$PROJECT_DIR" || exit 1
+
+# Run the compiled release binary with any passed arguments
+"$PROJECT_DIR/target/release/the_pear_dcbot" "$@"
