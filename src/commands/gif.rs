@@ -12,7 +12,13 @@ type Context<'a> = poise::Context<'a, Data, Error>;
 pub async fn gif(ctx: PrefixContext<'_, Data, Error>) -> Result<(), Error> {
 
     let new_message = ctx.msg;
-    let message = new_message.referenced_message.clone().unwrap();
+    let message =  match new_message.referenced_message.clone() {
+        Some(msg) => msg,
+        None => {
+            ctx.reply("Nigga u gotta reply with this command to an image.").await?;
+            return Ok(());
+        }
+    };
     let files = message.attachments.clone();
 
 
@@ -25,7 +31,7 @@ pub async fn gif(ctx: PrefixContext<'_, Data, Error>) -> Result<(), Error> {
         let link = &img.url;
 
         if let Err(e) = file_dl::download_image(link) {
-            eprintln!("Failed to download image: {e}");
+            // eprintln!("Failed to download image: {e}");
             continue;
         }
 
@@ -33,13 +39,14 @@ pub async fn gif(ctx: PrefixContext<'_, Data, Error>) -> Result<(), Error> {
 
         match image_result {
             Ok(attachment) => {
-                println!("Attachment created: {:?}", attachment);
+                // println!("Attachment created: {:?}", attachment);
 
                 let reply = poise::CreateReply::default().attachment(attachment);
                 ctx.send(reply).await?;
             }
             Err(e) => {
-                eprintln!("Error creating attachment: {}", e);
+                ctx.reply("I handled this error so leave me alone :pensive: ").await?;
+                // eprintln!("Error creating attachment: {}", e);
             }
         }
     }
