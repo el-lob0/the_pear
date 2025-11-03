@@ -66,7 +66,7 @@ pub async fn decrypt(
 
 ) -> Result<(), Error> {
 
-    let permitted: Vec<u64> = fs::read_to_string("./bot_storage/permission_to_decrypt.txt")
+    let permitted: Vec<u64> = fs::read_to_string("./permission_to_decrypt.txt")
         .expect("Failed to read file")
         .lines()                               // split by newline
         .filter_map(|line| line.trim().parse::<u64>().ok()) // try parsing each line to u64

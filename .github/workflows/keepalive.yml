@@ -10,4 +10,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Ping bot
-        run: curl -fsS https://your-app-name.onrender.com || echo "Failed to ping"
+        run: curl -fsS https://the-pear-1.onrender.com || echo "Failed to ping"

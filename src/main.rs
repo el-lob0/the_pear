@@ -67,20 +67,6 @@ async fn main() {
         fs::create_dir_all(dir_path);
     }
 
-    // 2. Create file if it doesn’t exist
-    if !Path::new(&file_path).exists() {
-        println!("File '{}' not found. Creating...", file_path);
-        let mut file = fs::File::create(&file_path);
-        let mut f = file.expect("failure");
-        writeln!(f, "466533081327861770");
-        writeln!(f, "1150090167667916810");
-        writeln!(f, "1311763342481948766");
-        writeln!(f, "1108756908766138449");
-        writeln!(f, "483623936618397696");
-        writeln!(f, "735569837522157629");
-        writeln!(f, "835981059609985065");
-    }
-
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
             commands: vec![ping(), encrypt(), decrypt(), gif(), summon()],
