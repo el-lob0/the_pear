@@ -3,7 +3,7 @@ use dotenv;
 
 mod util;
 mod commands;
-use commands::{ask::ask, pear::pear, crypting::{encrypt, decrypt}};
+use commands::{ask::ask, crypting::{decrypt, encrypt}, gif::gif, pear::pear};
 use commands::crypting::Data;
 // use commands::gif::gif;
 
@@ -45,7 +45,7 @@ async fn main() {
 
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
-            commands: vec![ping(), encrypt(), decrypt()],
+            commands: vec![ping(), encrypt(), decrypt(), gif()],
             prefix_options: poise::PrefixFrameworkOptions {
                 prefix: Some("!".into()),
                 ..Default::default()
