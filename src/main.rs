@@ -3,6 +3,7 @@ use dotenv;
 use std::fs;
 use std::path::Path;
 use std::io::Write;mod util;
+use axum::{routing::get, Router};
 
 mod commands;
 use commands::{ask::ask, crypting::{decrypt, encrypt}, gif::gif, pear::pear};
@@ -57,6 +58,16 @@ async fn summon(
 
 #[tokio::main]
 async fn main() {
+
+    let app = Router::new().route("/", get(|| async { "OK" }));
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:8000").await.unwrap();
+    println!("Web server listening on port 8000");
+
+    tokio::spawn(async move {
+        axum::serve(listener, app).await.unwrap();
+    });
+
+
 
     let dir_path = "bot_storage";
     let file_path = format!("{}/permission_to_decrypt.txt", dir_path);
