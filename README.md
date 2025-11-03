@@ -25,8 +25,8 @@ Encrypt a message typed in the options
 Decrypt the message that was replied to with the command.
 User decrypting must have his id in bot_storage/permission_to_decrypt.txt
 
-
-
+### !gif
+Rename image files to .gif and sends them back, so they can be favorited as gifs on discord.
 
 
 
